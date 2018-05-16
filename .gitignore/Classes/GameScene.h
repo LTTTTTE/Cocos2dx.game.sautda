@@ -2,6 +2,50 @@
 #pragma execution_character_set("utf-8")
 
 USING_NS_CC;
+class Player {
+
+private:
+
+	int money;
+	int cardPower;
+	//static Player* player;
+
+public:
+
+	int arr_player_card[3];
+	//static Player* getInstance();
+	void setMoney() { money = 10000; }
+	void setMoney(int a) { money = a; }
+	void addMoney(int a) { money += a; }
+	void subMoney(int a) { money -= a; }
+	int showMoney() { return money; }
+	void setCardPower(int a) { cardPower = a; }
+
+	void setCard();
+};
+
+
+class User : public Player {
+public:
+	static User* user_1;
+	static User* getInstance();
+	User() {
+				setMoney();
+				setCard();
+	}
+
+
+};
+
+class Computer : public Player {
+public:
+	Computer() {
+		//		setMoney();
+		//		setCard();
+	}
+
+
+};
 
 class GameScene : public Layer {
 
@@ -13,11 +57,21 @@ public:
 
 	void menuCallback(Ref* sender);
 
+	void gameAlgo();
+//	static int arr_card[21];
+	bool threeCard = false;
+
+	void update(float d);
+	void ui_Update(float d);
+
 	virtual bool init();
 
 	CREATE_FUNC(GameScene);
 
 };
+
+
+
 
 enum class Card : int {
 
