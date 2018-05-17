@@ -449,4 +449,24 @@ return true;
 
 
 
+void HelloWorld::doPause(Ref* pSender)
+
+{
+
+Director::getInstance()->getScheduler()->pauseTarget(this);
+
+}
+
+
+
+void HelloWorld::doResume(Ref* pSender)
+
+{
+
+Director::getInstance()->getScheduler()->resumeTarget(this);
+
+}
+
+
+
 */

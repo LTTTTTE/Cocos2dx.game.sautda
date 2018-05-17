@@ -2,7 +2,7 @@
 #include "HelloWorldScene.h"
 
 User* User::user_1 = nullptr;
-
+int arr_card[21] = { 0 };
 Scene* GameScene::createScene()
 {
 	Scene* scene = Scene::create();
@@ -36,35 +36,48 @@ void GameScene::menuCallback(Ref* sender) {
 
 }
 
-int arr_card[21];
-
-void GameScene::gameAlgo() {
-	
-
-}
-
 void GameScene::ui_Update(float d) {
 
 	int a = User::getInstance()->showMoney();
 	auto label = (Label*)this->getChildByName("user_money");
-	label->setString(StringUtils::format("Money : %d 원",a));
-	
+	label->setString(StringUtils::format("현금 : %d 원", a));
+
+	if (User::getInstance()->myTurn) {
+		
+
+	}
+
 }
 
-bool GameScene::init(){
+void GameScene::ui_card_Update(float d) {
+
+	auto spr_card_1_user = Sprite::create(StringUtils::format("%d.png", User::getInstance()->arr_player_card[0]));//
+	spr_card_1_user->setPosition(winsize.width / 10, winsize.height / 2);
+	spr_card_1_user->setScale(0.7);
+	auto act_card_throw_to_user = MoveTo::create(1.5, Point(winsize.width / 2 - 80, winsize.height / 5));
+	auto act_card_throw_spin = RotateBy::create(1.5, 360);
+	auto act_card_throw_to_user_spawn = Spawn::create(act_card_throw_to_user, act_card_throw_spin, NULL);
+	spr_card_1_user->runAction(act_card_throw_to_user_spawn);
+	this->addChild(spr_card_1_user);
+	Director::getInstance()->getScheduler()->pauseTarget(this);
+}
+
+void GameScene::game_director(float d) {
+
+	roundMoney = 1000;
+	User::getInstance()->myTurn = true;
+
+}
+
+bool GameScene::init() {
 
 	if (!Layer::init())
 	{
 		return false;
 	}
-
 	DrawGridWindow(50, Color4F(120, 120, 120, 120));
-	
-//	User* user_1 = new User;
-//	Computer* com_1 = new Computer;
-	
+
 	for (int i : arr_card) arr_card[i] = { 1 };
-	this->schedule(schedule_selector(GameScene::ui_Update), 0.5);
 
 	auto menu_item_1 = MenuItemLabel::create(
 		Label::createWithTTF("나가기", "fonts\\Hogukstd.ttf", 34), CC_CALLBACK_1(GameScene::menuCallback, this));
@@ -75,7 +88,7 @@ bool GameScene::init(){
 
 	this->addChild(menu);
 
-	auto label_user_money = Label::createWithSystemFont("", "", 20);
+	auto label_user_money = Label::createWithTTF("", "fonts\\Hogukstd.ttf", 20);
 	label_user_money->setPosition(winsize.width - winsize.width / 8, winsize.width / 7);
 	this->addChild(label_user_money, 5, "user_money");
 
@@ -83,17 +96,20 @@ bool GameScene::init(){
 	label_com_money->setPosition(winsize.width / 7, winsize.width - winsize.width / 8);
 	this->addChild(label_com_money, 5, "com_money");
 
-
-	auto spr_card_1_user = Sprite::create(StringUtils::format("%2d", User::getInstance()->arr_player_card[0]));
+	auto spr_but_check = Sprite::create("");
+	auto spr_but_half = Sprite::create("");
+	auto spr_but_call = Sprite::create("");
+	auto spr_but_die = Sprite::create("");
 	
+	
+
+	this->schedule(schedule_selector(GameScene::ui_Update), 0.5);
+	this->schedule(schedule_selector(GameScene::ui_card_Update), 0.5);
+
 	return true;
 }
 
-void GameScene::update(float d) {
 
-	CCLOG("%f", d);
-	
-}
 
 void Player::setCard() {
 
@@ -101,19 +117,32 @@ void Player::setCard() {
 	std::mt19937_64 rng(rd());
 	std::uniform_int_distribution<__int64>num(1, 20);
 	int num_1 = num(rng);
-	if (arr_card[num(rng)] == 1) {
-		arr_player_card[0] = num_1;
+	arr_player_card[0] = num_1;
+	/*if (arr_card[num(rng)] != 0) {
+		
 		arr_card[num(rng)] = 0;
 	}
 	int num_2 = num(rng);
-	if (arr_card[num(rng)] == 1) {
-		arr_player_card[0] = num_2;
+	if (arr_card[num(rng)] != 0) {
+		arr_player_card[1] = num_2;
 		arr_card[num(rng)] = 0;
-	}
+	}*/
 
 }
-User * User::getInstance()
-{
-	CCASSERT(user_1 != nullptr, "ERROR");
+
+void Player::setUp() {
+	bool isCheck = false;
+	bool isHalf = false;
+	bool isCall = false;
+	bool isDie = false;
+	bool myTurn = false;
+}
+
+User * User::getInstance() {
+
+	if (user_1 == nullptr)
+		user_1 = new User;
+
 	return user_1;
 }
+

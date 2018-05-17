@@ -13,15 +13,23 @@ private:
 public:
 
 	int arr_player_card[3];
-	//static Player* getInstance();
+
+	bool isCheck;
+	bool isHalf;
+	bool isCall;
+	bool isDie;
+	bool myTurn;
+
 	void setMoney() { money = 10000; }
 	void setMoney(int a) { money = a; }
 	void addMoney(int a) { money += a; }
 	void subMoney(int a) { money -= a; }
 	int showMoney() { return money; }
 	void setCardPower(int a) { cardPower = a; }
-
+	
+	void setUp();
 	void setCard();
+
 };
 
 
@@ -32,6 +40,7 @@ public:
 	User() {
 				setMoney();
 				setCard();
+				setUp();
 	}
 
 
@@ -42,6 +51,7 @@ public:
 	Computer() {
 		//		setMoney();
 		//		setCard();
+		//		setUp();
 	}
 
 
@@ -57,13 +67,15 @@ public:
 
 	void menuCallback(Ref* sender);
 
-	void gameAlgo();
-//	static int arr_card[21];
+	void gameAlgo() {};
 	bool threeCard = false;
+	int roundMoney;
 
-	void update(float d);
+;
 	void ui_Update(float d);
+	void ui_card_Update(float d);
 
+	void game_director(float d);
 	virtual bool init();
 
 	CREATE_FUNC(GameScene);
