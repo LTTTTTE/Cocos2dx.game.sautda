@@ -57,21 +57,25 @@ public:
 
 };
 
-class GameScene : public Layer {
+class GameScene : public LayerColor {
 
 public:
 
 	void DrawGridWindow(const int interval, const Color4F& color);
 
 	static Scene* createScene();
-
-	void menuCallback(Ref* sender);
-
-	void gameAlgo() {};
-	bool threeCard = false;
+	std::vector<Sprite*>vec_spr_money;
 	int roundMoney;
 
-;
+	void menuCallback(Ref* sender);
+	bool onTouchBegan(Touch * aa, Event *);
+	void gameAlgo() {};
+	bool threeCard = false;
+	
+	bool roundStart = false;
+	
+	void splitCard();
+	void throwMoney();
 	void ui_Update(float d);
 	void ui_card_Update(float d);
 
@@ -107,4 +111,14 @@ enum class Card : int {
 	c9_1,
 	cA_0,
 	cA_1
+};
+
+enum class TAG_MENU : int {
+	
+	tag_goback = 10 ,
+	tag_check,
+	tag_half,
+	tag_call,
+	tag_die
+
 };
