@@ -6,7 +6,7 @@ class Player {
 
 private:
 
-	int money;
+	double money;
 	int cardPower;
 	//static Player* player;
 
@@ -21,25 +21,28 @@ public:
 	bool myTurn;
 
 	void setMoney() { money = 10000; }
-	void setMoney(int a) { money = a; }
-	void addMoney(int a) { money += a; }
-	void subMoney(int a) { money -= a; }
-	int showMoney() { return money; }
+	void setMoney(double a) { money = a; }
+	void addMoney(double a) { money += a; }
+	void subMoney(double a) { money -= a; }
+	double showMoney() { return money; }
 	void setCardPower(int a) { cardPower = a; }
 	
 	void setUp();
 	void setCard();
+	void reset_Bev();
 
 };
 
 
 class User : public Player {
+
 public:
+
 	static User* user_1;
 	static User* getInstance();
+
 	User() {
 				setMoney();
-				setCard();
 				setUp();
 	}
 
@@ -47,17 +50,21 @@ public:
 };
 
 class Computer : public Player {
+
 public:
+
+	static Computer* com_1;
+	static Computer* getInstance();
+
 	Computer() {
-		//		setMoney();
-		//		setCard();
-		//		setUp();
+				setMoney();
+				setUp();
 	}
 
 
 };
 
-class GameScene : public LayerColor {
+class GameScene : public Layer {
 
 public:
 
@@ -65,21 +72,23 @@ public:
 
 	static Scene* createScene();
 	std::vector<Sprite*>vec_spr_money;
-	int roundMoney;
+	double roundMoney;
+	double callMoney;
 
 	void menuCallback(Ref* sender);
 	bool onTouchBegan(Touch * aa, Event *);
 	void gameAlgo() {};
+
 	bool threeCard = false;
-	
 	bool roundStart = false;
-	
+	bool phase2 = false;
+
 	void splitCard();
 	void throwMoney();
 	void ui_Update(float d);
 	void ui_card_Update(float d);
-
 	void game_director(float d);
+
 	virtual bool init();
 
 	CREATE_FUNC(GameScene);
