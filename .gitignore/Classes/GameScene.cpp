@@ -73,7 +73,8 @@ void GameScene::menuCallback(Ref* sender) {
 			double a = (double)(roundMoney / 2.0);
 			User::getInstance()->subMoney(a);
 			roundMoney += (double)a;
-			callMoney = a;
+			callMoney = (double)(a - callMoney);
+			halfCount++;
 			CCLOG(" HALF ! ");
 			User::getInstance()->myTurn = false;
 			Computer::getInstance()->myTurn = true;
@@ -86,7 +87,7 @@ void GameScene::menuCallback(Ref* sender) {
 
 		CCLOG("but_call");
 
-		if (User::getInstance()->myTurn) {
+		if (User::getInstance()->myTurn && Computer::getInstance()->isHalf) {
 
 			User::getInstance()->reset_Bev();
 			User::getInstance()->isCall = true;
@@ -94,7 +95,7 @@ void GameScene::menuCallback(Ref* sender) {
 			User::getInstance()->subMoney(callMoney);
 			roundMoney += callMoney;
 			throwMoney();
-			CCLOG(" CALL !  : %d",callMoney);
+			CCLOG(" CALL !  : %lf",callMoney);
 			User::getInstance()->myTurn = false;
 			Computer::getInstance()->myTurn = false;
 
@@ -134,8 +135,9 @@ bool GameScene::onTouchBegan(Touch * aa, Event *) {
 
 		CCLOG("roundStart = true");
 		roundStart = true;
-		roundMoney = (double)1000.0;
-		callMoney = 0;
+		roundMoney = (double)100.0;
+		callMoney = 0.0;
+		halfCount = 0;
 		User::getInstance()->myTurn = true;
 
 		this->removeChildByName("spr_pill_start");
@@ -160,19 +162,25 @@ void GameScene::splitCard() {
 		for (int i = 0; i < 3; i++)CCLOG("player card %d = %d", i, User::getInstance()->arr_player_card[i]);
 		for (int i = 0; i < 3; i++)CCLOG("computer card %d = %d", i, Computer::getInstance()->arr_player_card[i]);
 
-		auto spr_card_1_user = Sprite::create(StringUtils::format("%d.png", User::getInstance()->arr_player_card[0]));
+		auto spr_card_1_user = Sprite::create(StringUtils::format("card\\%d.png", User::getInstance()->arr_player_card[0]));
 		spr_card_1_user->setPosition(winsize.width / 10, winsize.height / 2);
 		spr_card_1_user->setScale(0.7);
 
-		auto spr_card_1_com = Sprite::create(StringUtils::format("%d.png", Computer::getInstance()->arr_player_card[0]));
+		auto spr_card_1_com = Sprite::create(StringUtils::format("card\\%d.png", Computer::getInstance()->arr_player_card[0]));
 		spr_card_1_com->setPosition(winsize.width / 10, winsize.height / 2);
 		spr_card_1_com->setScale(0.7);
 
+		auto spr_card_back = Sprite::create("card\\card_back.PNG");
+		spr_card_back->setPosition(winsize.width / 10, winsize.height / 2);
+		spr_card_back->setScale(0.7);
+
+		auto delay_card_throw = DelayTime::create(0.45);
 
 		auto act_card_throw_to_user = MoveTo::create(0.5, Point(winsize.width / 2 - 80, winsize.height / 7));
 		auto act_card_throw_spin = RotateBy::create(0.5, 360);
 		auto act_card_throw_to_user_spawn = Spawn::create(act_card_throw_to_user, act_card_throw_spin, NULL);
-		spr_card_1_user->runAction(act_card_throw_to_user_spawn);
+		auto act_card_throw_to_user_spawn_seq = Sequence::create(delay_card_throw, act_card_throw_to_user_spawn, NULL);
+		spr_card_1_user->runAction(act_card_throw_to_user_spawn_seq);
 
 		auto act_card_throw_to_com = MoveTo::create(0.5, Point(winsize.width / 2 - 480, winsize.height / 7));
 		auto act_card_throw_spin_1 = RotateBy::create(0.5, 360);
@@ -181,6 +189,7 @@ void GameScene::splitCard() {
 
 		this->addChild(spr_card_1_user);
 		this->addChild(spr_card_1_com);
+		this->addChild(spr_card_back,10);
 	}
 	else {
 
@@ -192,11 +201,13 @@ void GameScene::splitCard() {
 		spr_card_1_com_2->setPosition(winsize.width / 10, winsize.height / 2);
 		spr_card_1_com_2->setScale(0.7);
 
+		auto delay_card_throw = DelayTime::create(0.45);
 
 		auto act_card_throw_to_user_2 = MoveTo::create(0.5, Point(winsize.width / 2 +20, winsize.height / 7));
 		auto act_card_throw_spin_2 = RotateBy::create(0.5, 360);
 		auto act_card_throw_to_user_spawn_2 = Spawn::create(act_card_throw_to_user_2, act_card_throw_spin_2, NULL);
-		spr_card_1_user_2->runAction(act_card_throw_to_user_spawn_2);
+		auto act_card_throw_to_user_spawn_seq = Sequence::create(delay_card_throw, act_card_throw_to_user_spawn_2, NULL);
+		spr_card_1_user_2->runAction(act_card_throw_to_user_spawn_seq);
 
 		auto act_card_throw_to_com_2 = MoveTo::create(0.5, Point(winsize.width / 2 - 380, winsize.height / 7));
 		auto act_card_throw_spin_1_2 = RotateBy::create(0.5, 360);
@@ -218,9 +229,16 @@ void GameScene::throwMoney() {
 		std::random_device rd;
 		std::mt19937_64 rng(rd());
 		std::uniform_int_distribution<__int64>num(-100, 100);
-		std::uniform_int_distribution<__int64>mon(1, 6);  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		Sprite* spr_money = Sprite::create(StringUtils::format(("money\\money_%d.png"),mon(rng)));
+		int num_spr_money;
+		if (halfCount < 3)num_spr_money = 1;
+		else if (halfCount < 6)num_spr_money = 2;
+		else if (halfCount < 9)num_spr_money = 3;
+		else if (halfCount < 12)num_spr_money = 4;
+		else if (halfCount < 15)num_spr_money = 5;
+		else num_spr_money = 6;
+
+		Sprite* spr_money = Sprite::create(StringUtils::format(("money\\money_%d.png"), num_spr_money));
 		spr_money->setPosition(winsize.width - (winsize.width - winsize.height) / 2, winsize.height / 2);
 		spr_money->setScale(1);
 
@@ -266,7 +284,7 @@ void GameScene::game_director(float d) {
 	
 	///////////////////////////////////////
 	if (Computer::getInstance()->myTurn) {
-
+		
 		std::random_device rd;
 		std::mt19937_64 rng(rd());
 		std::uniform_int_distribution<__int64>num(1, 100);
@@ -282,7 +300,8 @@ void GameScene::game_director(float d) {
 				double a = (double)(roundMoney / 2.0);
 				//Computer::getInstance()->subMoney(a);
 				roundMoney += (double)a;
-				callMoney = a;
+				callMoney = (double)(a - callMoney);
+				halfCount++;
 				CCLOG(" COM : HALF ! ");
 				Computer::getInstance()->myTurn = false;
 				User::getInstance()->myTurn = true;
@@ -296,7 +315,7 @@ void GameScene::game_director(float d) {
 				//Computer::getInstance()->subMoney(callMoney);
 				roundMoney += callMoney;
 				throwMoney();
-				CCLOG(" COM :  CALL ! : %d", callMoney);
+				CCLOG(" COM :  CALL ! : %lf", callMoney);
 
 				Computer::getInstance()->myTurn = false;
 				User::getInstance()->myTurn = false;
@@ -314,7 +333,7 @@ void GameScene::game_director(float d) {
 				//Computer::getInstance()->subMoney(callMoney);
 				roundMoney += callMoney;
 				throwMoney();
-				CCLOG(" COM :  CALL ! : %d", callMoney);
+				CCLOG(" COM :  CALL ! : %lf", callMoney);
 
 				Computer::getInstance()->myTurn = false;
 				User::getInstance()->myTurn = false;
@@ -329,7 +348,8 @@ void GameScene::game_director(float d) {
 				double a = (double)(roundMoney / 2.0);
 				//Computer::getInstance()->subMoney(a);
 				roundMoney += (double)a;
-				callMoney = a;
+				callMoney = (double)(a - callMoney);
+				halfCount++;
 				CCLOG(" COM : HALF ! ");
 				Computer::getInstance()->myTurn = false;
 				User::getInstance()->myTurn = true;
@@ -352,14 +372,55 @@ void GameScene::game_director(float d) {
 
 		CCLOG("PHASE 2 ! ");
 		phase2 = true;
+		auto delay = CCDelayTime::create(3.0);
 		splitCard();
 		CCLOG("PHASE 2 ! %d", phase2);
-
+		callMoney = 0.0; 
 
 		User::getInstance()->myTurn = true;
 	}
 
+	if (User::getInstance()->isDie || Computer::getInstance()->isDie || phase2 && (User::getInstance()->isCall || Computer::getInstance()->isCall || User::getInstance()->isDie) && (!Computer::getInstance()->myTurn && !User::getInstance()->myTurn)) {
+		
+		CCLOG(" END PHASE ! ");
+		User::getInstance()->CardCheckAlGo();
+		Computer::getInstance()->CardCheckAlGo();
+		
+		CCLOG("User : %d", User::getInstance()->showCardPower());
+		CCLOG("Com  : %d", Computer::getInstance()->showCardPower());
+
+	}
+
+
 	///////////////////////////////////////
+}
+
+void Player::CardCheckAlGo() {
+
+	int a = arr_player_card[0];
+	int b = arr_player_card[1];
+
+	for (int i = 0; i < 2; i++) {
+
+		if (a == 3 && b == 8) setCardPower(10000); //3.8±¤¶¯
+		else if (a == 1 && (b == 3 || b == 8))setCardPower(8000); //1.8 , 1.3 ±¤¶¯
+		else if (a + 10 == b) setCardPower(a * 100); // 1¶¯ ~ Àå¶¯ 100 ~ 1000
+		else if ((a == 1 || a == 11) && (b == 2 || b == 12))setCardPower(80); //¾Ë¸®
+		else if ((a == 1 || a == 11) && (b == 4 || b == 14))setCardPower(70); //µ¶»ç
+		else if ((a == 1 || a == 11) && (b == 9 || b == 19))setCardPower(60); //±¸»æ
+		else if ((a == 1 || a == 11) && (b == 10 || b == 20))setCardPower(50); //Àå»æ
+		else if ((a == 4 || a == 14) && (b == 10 || b == 20))setCardPower(40); //Àå»ç
+		else if ((a == 4 || a == 14) && (b == 6 || b == 16))setCardPower(30); //¼¼·ú
+		else if (a + b == 9 || a + b == 19 || a + b == 29)setCardPower(20); //°©¿À
+
+		else if ((a == 3 || a == 13) && (b == 7 || b == 17))setCardPower(999); //¶¯ÀâÀÌ
+		else if (a == 4 && b == 9)setCardPower(1001); //¸ÛÅÖ±¸¸®±¸»ç
+		else if (a == 4 && b == 7)setCardPower(9001); //¾ÏÇà¾î»ç
+		else if ((a == 4 || a == 14) && (b == 9 || b == 19))setCardPower(81); //±¸»ç
+
+		else setCardPower((a + b) % 10);
+		a ^= b ^= a ^= b;
+	}
 }
 
 bool GameScene::init() {
@@ -436,6 +497,7 @@ bool GameScene::init() {
 	for (int i = 0; i < 3; i++)CCLOG("player card %d = %d", i, User::getInstance()->arr_player_card[i]);
 
 	return true;
+
 }
 
 
@@ -471,6 +533,7 @@ void Player::setUp() {
 	 isCall = false;
 	 isDie = false;
 	 myTurn = false;
+	 cardPower = 0;
 	 for (int i = 0; i < 3; i++)arr_player_card[i] = 0;
 	
 }

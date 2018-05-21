@@ -8,11 +8,11 @@ private:
 
 	double money;
 	int cardPower;
-	//static Player* player;
 
 public:
 
 	int arr_player_card[3];
+	
 
 	bool isCheck;
 	bool isHalf;
@@ -25,7 +25,10 @@ public:
 	void addMoney(double a) { money += a; }
 	void subMoney(double a) { money -= a; }
 	double showMoney() { return money; }
-	void setCardPower(int a) { cardPower = a; }
+	int showCardPower() { return cardPower; }
+
+	void CardCheckAlGo();
+	void setCardPower(int a) { if (a > cardPower)cardPower = a; }
 	
 	void setUp();
 	void setCard();
@@ -74,6 +77,7 @@ public:
 	std::vector<Sprite*>vec_spr_money;
 	double roundMoney;
 	double callMoney;
+	int halfCount;
 
 	void menuCallback(Ref* sender);
 	bool onTouchBegan(Touch * aa, Event *);
