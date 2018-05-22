@@ -82,13 +82,15 @@ public:
 	void menuCallback(Ref* sender);
 	bool onTouchBegan(Touch * aa, Event *);
 	void gameAlgo() {};
-
+	void removeNode(Node * node);
 	bool threeCard = false;
 	bool roundStart = false;
 	bool phase2 = false;
 
 	void splitCard();
 	void throwMoney();
+	void throwLabel();
+	void CheckWhatYouGot();
 	void ui_Update(float d);
 	void ui_card_Update(float d);
 	void game_director(float d);

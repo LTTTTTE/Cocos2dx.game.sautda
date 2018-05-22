@@ -138,6 +138,7 @@ bool GameScene::onTouchBegan(Touch * aa, Event *) {
 		roundMoney = (double)100.0;
 		callMoney = 0.0;
 		halfCount = 0;
+		User::getInstance()->subMoney(roundMoney / 2.0);
 		User::getInstance()->myTurn = true;
 
 		this->removeChildByName("spr_pill_start");
@@ -151,8 +152,49 @@ bool GameScene::onTouchBegan(Touch * aa, Event *) {
 		splitCard();
 
 	}
+	if (roundStart)
+	if (((Sprite*)this->getChildByName("spr_restart"))->getBoundingBox().containsPoint(aa->getLocation())) {
+		
+		CCLOG("roundRestart");
 
+		this->removeChildByName("spr_card_1_user");
+		this->removeChildByName("spr_card_1_com");
+		this->removeChildByName("spr_card_1_user_2");
+		this->removeChildByName("spr_card_1_com_2");
+		auto label_user = (Label*)this->getChildByName("label_user_power");
+		auto label_com = (Label*)this->getChildByName("label_com_power");
+		label_user->setString("");
+		label_com->setString("");
+		phase2 = false;
+		User::getInstance()->reset_Bev();
+		Computer::getInstance()->reset_Bev();
+		User::getInstance()->setUp();
+		Computer::getInstance()->setUp();
+		User::getInstance()->setCard();
+		Computer::getInstance()->setCard();
+		roundMoney = (double)100.0;
+		callMoney = 0.0;
+		halfCount = 0;
+		
+
+		User::getInstance()->subMoney(roundMoney / 2.0);
+		User::getInstance()->myTurn = true;
+		((Sprite*)this->getChildByName("spr_restart"))->setPosition(winsize.width * 2, winsize.height * 2);
+
+		
+		
+
+		splitCard();
+
+	}
 	return true;
+}
+
+void GameScene::removeNode(Node * node){
+
+	if (node != nullptr)
+		this->removeChild(node);
+
 }
 
 void GameScene::splitCard() {
@@ -187,8 +229,8 @@ void GameScene::splitCard() {
 		auto act_card_throw_to_com_spawn = Spawn::create(act_card_throw_to_com, act_card_throw_spin_1, NULL);
 		spr_card_1_com->runAction(act_card_throw_to_com_spawn);
 
-		this->addChild(spr_card_1_user);
-		this->addChild(spr_card_1_com);
+		this->addChild(spr_card_1_user, 2, "spr_card_1_user");
+		this->addChild(spr_card_1_com, 2, "spr_card_1_com");
 		this->addChild(spr_card_back,10);
 	}
 	else {
@@ -206,16 +248,17 @@ void GameScene::splitCard() {
 		auto act_card_throw_to_user_2 = MoveTo::create(0.5, Point(winsize.width / 2 +20, winsize.height / 7));
 		auto act_card_throw_spin_2 = RotateBy::create(0.5, 360);
 		auto act_card_throw_to_user_spawn_2 = Spawn::create(act_card_throw_to_user_2, act_card_throw_spin_2, NULL);
-		auto act_card_throw_to_user_spawn_seq = Sequence::create(delay_card_throw, act_card_throw_to_user_spawn_2, NULL);
+		auto act_card_throw_to_user_spawn_seq = Sequence::create(delay_card_throw, delay_card_throw, delay_card_throw, act_card_throw_to_user_spawn_2, NULL);
 		spr_card_1_user_2->runAction(act_card_throw_to_user_spawn_seq);
 
 		auto act_card_throw_to_com_2 = MoveTo::create(0.5, Point(winsize.width / 2 - 380, winsize.height / 7));
 		auto act_card_throw_spin_1_2 = RotateBy::create(0.5, 360);
 		auto act_card_throw_to_com_spawn_2 = Spawn::create(act_card_throw_to_com_2, act_card_throw_spin_1_2, NULL);
-		spr_card_1_com_2->runAction(act_card_throw_to_com_spawn_2);
+		auto act_card_throw_to_com_spawn_2_seq = Sequence::create(delay_card_throw, delay_card_throw, act_card_throw_to_com_spawn_2, NULL);
+		spr_card_1_com_2->runAction(act_card_throw_to_com_spawn_2_seq);
 
-		this->addChild(spr_card_1_user_2);
-		this->addChild(spr_card_1_com_2);
+		this->addChild(spr_card_1_user_2, 2, "spr_card_1_user_2");
+		this->addChild(spr_card_1_com_2, 2, "spr_card_1_com_2");
 
 	}
 }
@@ -237,12 +280,14 @@ void GameScene::throwMoney() {
 		else if (halfCount < 12)num_spr_money = 4;
 		else if (halfCount < 15)num_spr_money = 5;
 		else num_spr_money = 6;
-
+		
 		Sprite* spr_money = Sprite::create(StringUtils::format(("money\\money_%d.png"), num_spr_money));
-		spr_money->setPosition(winsize.width - (winsize.width - winsize.height) / 2, winsize.height / 2);
+
+		if (User::getInstance()->myTurn) spr_money->setPosition(winsize.width / 2 + 20, winsize.height / 7);
+		else spr_money->setPosition(winsize.width / 2 - 380, winsize.height / 7);
 		spr_money->setScale(1);
 
-		auto act_throw_money = MoveTo::create(0.7, Point(winsize.height / 2 + num(rng) * 3.5, winsize.height*0.75 + num(rng)*1.2));
+	    auto act_throw_money = MoveTo::create(0.7, Point(winsize.height / 2 + num(rng) * 3.5, winsize.height*0.75 + num(rng)*1.2));
 		auto act_throw_money_1 = EaseOut::create(act_throw_money, 4);
 		spr_money->runAction(act_throw_money_1);
 		this->addChild(spr_money, 1);
@@ -252,6 +297,23 @@ void GameScene::throwMoney() {
 	}
 }
 
+void GameScene::throwLabel(){
+
+	auto label = (Label*)this->getChildByName("label_com_bev");
+
+	     if (Computer::getInstance()->isCheck)label->setString("眉农 ! ");
+	else if (Computer::getInstance()->isHalf) label->setString("窍橇 ! ");
+	else if (Computer::getInstance()->isCall) label->setString("妮 ! ");
+	else if (Computer::getInstance()->isDie)  label->setString("促捞 ! ");
+	
+	auto act_fade_in = FadeIn::create(0.01);
+	auto act_fade_out = FadeOut::create(1.5);
+	auto act_fade_out_Easein = EaseIn::create(act_fade_out, 1.5);
+	auto act_seq = Sequence::create(act_fade_in, act_fade_out_Easein, NULL);
+	label->runAction(act_seq);
+
+}
+
 void GameScene::ui_Update(float d) {
 	
 	//CCLOG("ui_update %f", d);
@@ -259,17 +321,43 @@ void GameScene::ui_Update(float d) {
 	double a = User::getInstance()->showMoney();
 
 	auto label = (Label*)this->getChildByName("user_money");
-	label->setString(StringUtils::format("儡绊 : %.1lf BTC", a));
+	label->setString(StringUtils::format("儡绊 : %.1lf 盔", a));
 
 	auto label_2 = (Label*)this->getChildByName("round_money");
-	label_2->setString(StringUtils::format("魄捣 : %.1lf BTC", roundMoney));
+	label_2->setString(StringUtils::format("魄捣 : %.1lf 盔", roundMoney));
 
-	
-	if (User::getInstance()->myTurn) {
-		
+	if (User::getInstance()->isDie || Computer::getInstance()->isDie || phase2 && (User::getInstance()->isCall || Computer::getInstance()->isCall || User::getInstance()->isDie) && (!Computer::getInstance()->myTurn && !User::getInstance()->myTurn)) {
+
+		if (User::getInstance()->showCardPower() > Computer::getInstance()->showCardPower()) {
+
+			for (int i = 0; i < vec_spr_money.size(); i++) {
+				auto act_money_to_winner = MoveTo::create(0.2, Point(winsize.width / 2 - 80, winsize.height / 7));
+				auto act_delete = Sequence::create(act_money_to_winner, CallFunc::create(CC_CALLBACK_0(GameScene::removeNode, this, vec_spr_money[i])), nullptr);
+				vec_spr_money[i]->runAction(act_delete);
+
+				this->removeChild(vec_spr_money[i]);
+				vec_spr_money.erase(vec_spr_money.begin() + i);
+			}
+
+			User::getInstance()->addMoney(roundMoney);
+			roundMoney = 0;
+		}
+		else if (User::getInstance()->showCardPower() < Computer::getInstance()->showCardPower()) {
+
+			for (int i = 0; i < vec_spr_money.size(); i++) {
+				auto act_money_to_winner = MoveTo::create(0.2, Point(winsize.width / 2 - 480, winsize.height / 7));
+				auto act_delete = Sequence::create(act_money_to_winner, CallFunc::create(CC_CALLBACK_0(GameScene::removeNode, this, vec_spr_money[i])), nullptr);
+				vec_spr_money[i]->runAction(act_delete);
+
+				this->removeChild(vec_spr_money[i]);
+				vec_spr_money.erase(vec_spr_money.begin() + i);
+			}
+
+			Computer::getInstance()->addMoney(roundMoney);
+			roundMoney = 0;
+		}
 
 	}
-
 }
 
 void GameScene::ui_card_Update(float d) {
@@ -295,13 +383,14 @@ void GameScene::game_director(float d) {
 				
 				Computer::getInstance()->reset_Bev();
 				Computer::getInstance()->isHalf = true;
-				throwMoney();
-
+				
 				double a = (double)(roundMoney / 2.0);
 				//Computer::getInstance()->subMoney(a);
 				roundMoney += (double)a;
 				callMoney = (double)(a - callMoney);
 				halfCount++;
+				throwMoney();
+				throwLabel();
 				CCLOG(" COM : HALF ! ");
 				Computer::getInstance()->myTurn = false;
 				User::getInstance()->myTurn = true;
@@ -315,6 +404,7 @@ void GameScene::game_director(float d) {
 				//Computer::getInstance()->subMoney(callMoney);
 				roundMoney += callMoney;
 				throwMoney();
+				throwLabel();
 				CCLOG(" COM :  CALL ! : %lf", callMoney);
 
 				Computer::getInstance()->myTurn = false;
@@ -333,6 +423,7 @@ void GameScene::game_director(float d) {
 				//Computer::getInstance()->subMoney(callMoney);
 				roundMoney += callMoney;
 				throwMoney();
+				throwLabel();
 				CCLOG(" COM :  CALL ! : %lf", callMoney);
 
 				Computer::getInstance()->myTurn = false;
@@ -344,7 +435,7 @@ void GameScene::game_director(float d) {
 				Computer::getInstance()->reset_Bev();
 				Computer::getInstance()->isHalf = true;
 				throwMoney();
-
+				throwLabel();
 				double a = (double)(roundMoney / 2.0);
 				//Computer::getInstance()->subMoney(a);
 				roundMoney += (double)a;
@@ -359,7 +450,7 @@ void GameScene::game_director(float d) {
 				
 				Computer::getInstance()->reset_Bev();
 				Computer::getInstance()->isDie = true;
-
+				throwLabel();
 				CCLOG(" COM : DIE ! ");
 				Computer::getInstance()->myTurn = false;
 				User::getInstance()->myTurn = false;
@@ -388,11 +479,148 @@ void GameScene::game_director(float d) {
 		
 		CCLOG("User : %d", User::getInstance()->showCardPower());
 		CCLOG("Com  : %d", Computer::getInstance()->showCardPower());
-
+		
+		CheckWhatYouGot();
+		auto spr = (Sprite*)this->getChildByName("spr_restart");
+		spr->setPosition(winsize.width / 2, winsize.height / 2);
 	}
 
 
 	///////////////////////////////////////
+}
+
+void GameScene::CheckWhatYouGot() {
+
+	int power = User::getInstance()->showCardPower();
+	auto label_user = (Label*)this->getChildByName("label_user_power");
+	
+
+	for (int i = 0; i < 2; i++) {
+
+
+		switch (power) {
+
+		case 10000: {
+			label_user->setString("伙迫堡动");
+			break;
+		}
+		case 8000: {
+			label_user->setString("堡动");
+			break;
+		}
+		case 1000: {
+			label_user->setString("厘动");
+			break;
+		}
+		case 900: {
+			label_user->setString("备动");
+			break;
+		}
+		case 800: {
+			label_user->setString("迫动");
+			break;
+		}
+		case 700: {
+			label_user->setString("磨动");
+			break;
+		}
+		case 600: {
+			label_user->setString("腊动");
+			break;
+		}
+		case 500: {
+			label_user->setString("坷动");
+			break;
+		}
+		case 400: {
+			label_user->setString("荤动");
+			break;
+		}
+		case 300: {
+			label_user->setString("伙动");
+			break;
+		}
+		case 200: {
+			label_user->setString("捞动");
+			break;
+		}
+		case 100: {
+			label_user->setString("老动");
+			break;
+		}
+		case 80: {
+			label_user->setString("舅府");
+			break;
+		}
+		case 70: {
+			label_user->setString("刀荤");
+			break;
+		}
+		case 60: {
+			label_user->setString("备绘");
+			break;
+		}
+		case 50: {
+			label_user->setString("厘绘");
+			break;
+		}
+		case 40: {
+			label_user->setString("厘荤");
+			break;
+		}
+		case 30: {
+			label_user->setString("技氟");
+			break;
+		}
+		case 20: {
+			label_user->setString("癌坷");
+			break;
+		}
+		case 8: {
+			label_user->setString("咯袋场");
+			break;
+		}
+		case 7: {
+			label_user->setString("老蚌场");
+			break;
+		}
+		case 6: {
+			label_user->setString("咯几场");
+			break;
+		}
+		case 5: {
+			label_user->setString("促几场");
+			break;
+		}
+		case 4: {
+			label_user->setString("匙场");
+			break;
+		}
+		case 3: {
+			label_user->setString("技场");
+			break;
+		}
+		case 2: {
+			label_user->setString("滴场");
+			break;
+		}
+		case 1: {
+			label_user->setString("茄场");
+			break;
+		}
+		case 0: {
+			label_user->setString("噶烹 ばば");
+			break;
+		}
+
+
+		}
+
+	power = Computer::getInstance()->showCardPower();
+	label_user = (Label*)this->getChildByName("label_com_power");
+	}
+
+
 }
 
 void Player::CardCheckAlGo() {
@@ -413,12 +641,12 @@ void Player::CardCheckAlGo() {
 		else if ((a == 4 || a == 14) && (b == 6 || b == 16))setCardPower(30); //技氟
 		else if (a + b == 9 || a + b == 19 || a + b == 29)setCardPower(20); //癌坷
 
-		else if ((a == 3 || a == 13) && (b == 7 || b == 17))setCardPower(999); //动棱捞
-		else if (a == 4 && b == 9)setCardPower(1001); //港胖备府备荤
-		else if (a == 4 && b == 7)setCardPower(9001); //鞠青绢荤
-		else if ((a == 4 || a == 14) && (b == 9 || b == 19))setCardPower(81); //备荤
+//		else if ((a == 3 || a == 13) && (b == 7 || b == 17))setCardPower(999);		//动棱捞
+//		else if (a == 4 && b == 9)setCardPower(1001);					   			//港胖备府备荤
+//		else if (a == 4 && b == 7)setCardPower(9001);								//鞠青绢荤
+//		else if ((a == 4 || a == 14) && (b == 9 || b == 19))setCardPower(81);		//备荤
 
-		else setCardPower((a + b) % 10);
+		else setCardPower((a + b) % 10); // 棱菩
 		a ^= b ^= a ^= b;
 	}
 }
@@ -451,6 +679,25 @@ bool GameScene::init() {
 	auto label_round_money = Label::createWithTTF("", "fonts\\Hogukstd.ttf", 30);
 	label_round_money->setPosition(winsize.height / 2, winsize.height - 27);
 	this->addChild(label_round_money, 5, "round_money");
+
+	auto label_com_bev = Label::createWithTTF("", "fonts\\Hogukstd.ttf", 47);
+	label_com_bev->setPosition(winsize.width / 2 - 380, winsize.height / 4);
+	this->addChild(label_com_bev, 6, "label_com_bev");
+
+	auto label_user_power = Label::createWithTTF("", "fonts\\Hogukstd.ttf", 34);
+	label_user_power->setPosition(winsize.width / 2 - 80, winsize.height / 4);
+	this->addChild(label_user_power, 10, "label_user_power");
+
+	auto label_com_power = Label::createWithTTF("", "fonts\\Hogukstd.ttf", 34);
+	label_com_power->setPosition(winsize.width / 2 - 480, winsize.height / 4);
+	this->addChild(label_com_power, 10, "label_com_power");
+
+	auto label_card_power = Label::createWithTTF(
+		"伙迫堡动  堡动  厘动  9动  8动  7动  6动  5动  4动  3动  2动  1动  舅府  刀荤  备绘  厘绘  厘荤  技氟  癌坷   酒醛场 咯袋场 老蚌场 咯几场 促几场  匙场  技场  滴场  茄场  噶烹",
+		"fonts\\Hogukstd.ttf", 30, Size(450, 450), TextHAlignment::CENTER, TextVAlignment::CENTER);
+	label_card_power->setPosition(winsize.height + (winsize.width - winsize.height) / 2, winsize.height / 2);
+	label_card_power->setLineSpacing(20);
+	this->addChild(label_card_power);
 
 	auto spr_but_check_0 = Sprite::create("spr_check_0.png");	auto spr_but_check_1 = Sprite::create("spr_check_1.png");
 	auto spr_but_half_0 = Sprite::create("spr_half_0.png");		auto spr_but_half_1  = Sprite::create("spr_half_1.png");
@@ -493,14 +740,18 @@ bool GameScene::init() {
 	spr_background_2->setScale(1.34);
 	this->addChild(spr_background_2,-100);
 
+	auto spr_restart = Sprite::create("Pikachu_Pokemon_48px.png");
+	spr_restart->setPosition(winsize.width * 2, winsize.height * 2);
+	spr_restart->setName("spr_restart");
+	this->addChild(spr_restart);
+	
+
 	for (int i = 0; i < 21;i++) CCLOG("card %d = %d", i, arr_card[i]);
 	for (int i = 0; i < 3; i++)CCLOG("player card %d = %d", i, User::getInstance()->arr_player_card[i]);
 
 	return true;
 
 }
-
-
 
 void Player::setCard() {
 
@@ -554,7 +805,6 @@ User* User::getInstance() {
 
 	return user_1;
 }
-
 
 Computer* Computer::getInstance() {
 
