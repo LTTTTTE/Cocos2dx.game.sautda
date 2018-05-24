@@ -45,7 +45,7 @@ bool OptionScene::init()
 	auto menu_item_1 = MenuItemLabel::create(
 		Label::createWithTTF("뒤로가기", "fonts\\Hogukstd.ttf", 34), CC_CALLBACK_1(OptionScene::menuCallback, this));
 	auto menu = Menu::create(menu_item_1, NULL);
-
+	menu->setPosition(winsize.width / 9, winsize.height / 8);
 	menu->alignItemsVerticallyWithPadding(20);
 
 	this->addChild(menu);

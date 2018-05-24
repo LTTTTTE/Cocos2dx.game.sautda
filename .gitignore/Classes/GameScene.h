@@ -86,14 +86,17 @@ public:
 	bool threeCard = false;
 	bool roundStart = false;
 	bool phase2 = false;
+	bool EndPhase = true;
 
 	void splitCard();
 	void throwMoney();
 	void throwLabel();
 	void CheckWhatYouGot();
+	void ui_2nd_Phase();
 	void ui_Update(float d);
 	void ui_card_Update(float d);
 	void game_director(float d);
+	void ui_end_Phase();
 
 	virtual bool init();
 
